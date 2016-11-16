@@ -196,7 +196,7 @@ static CFLock_t __CFBigRuntimeFunnel = CFLockInit;
 CF_PRIVATE CFRuntimeClass * __CFRuntimeClassTable[__CFRuntimeClassTableSize] = {0};
 CF_PRIVATE int32_t __CFRuntimeClassTableCount = 0;
 
-CF_PRIVATE uintptr_t __CFRuntimeObjCClassTable[__CFRuntimeClassTableSize] = {0};
+CF_PRIVATE uintptr_t __CFRuntimeObjCClassTable[__CFRuntimeClassTableSize][__CFBridgeClassCollectionSize] = {0};
 
 #if (TARGET_OS_MAC && !(TARGET_OS_EMBEDDED || TARGET_OS_IPHONE) && __x86_64h__) // Match parity with private header
 // This must be defined because previous linkages may reference this symbol, however for x86_64h builds this should never be anything but NULL
@@ -258,9 +258,13 @@ CFTypeID _CFRuntimeRegisterClass(const CFRuntimeClass * const cls) {
     return typeID;
 }
 
-void _CFRuntimeBridgeTypeToClass(CFTypeID cf_typeID, const void *cls_ref) {
+void _CFRuntimeBridgeTypeToClass(CFTypeID cf_typeID, const void *cls_ref[], int size) {
     __CFLock(&__CFBigRuntimeFunnel);
-    __CFRuntimeObjCClassTable[cf_typeID] = (uintptr_t)cls_ref;
+    
+    for (int i = 0; i < size; ++i) {
+        __CFRuntimeObjCClassTable[cf_typeID][i] = (uintptr_t)cls_ref[i];
+    }
+    
     __CFUnlock(&__CFBigRuntimeFunnel);
 }
 
@@ -331,7 +335,7 @@ CFTypeRef _CFRuntimeCreateInstance(CFAllocatorRef allocator, CFTypeID typeID, CF
     // Under the Swift runtime, all CFTypeRefs are _NSCFTypes or a toll-free bridged type
     
     extern  void *swift_allocObject(uintptr_t metadata, size_t requiredSize, size_t requiredAlignmentMask);
-    uintptr_t isa = __CFRuntimeObjCClassTable[typeID];
+    uintptr_t isa = __CFRuntimeObjCClassTable[typeID][0];
     CFIndex size = sizeof(CFRuntimeBase) + extraBytes;
     CFRuntimeClass *cls = __CFRuntimeClassTable[typeID];
     size_t align = (cls->version & _kCFRuntimeRequiresAlignment) ? cls->requiredAlignment : 16;
@@ -1058,7 +1062,9 @@ void __CFInitialize(void) {
 
         uintptr_t NSCFType = __CFSwiftGetBaseClass();
         for (CFIndex idx = 1; idx < __CFRuntimeClassTableSize; idx++) {
-            __CFRuntimeObjCClassTable[idx] = NSCFType;
+            for (CFIndex cIndex = 0; cIndex < __CFBridgeClassCollectionSize; cIndex++) {
+                __CFRuntimeObjCClassTable[idx][cIndex] = NSCFType;
+            }
         }
 #endif
 
@@ -1780,7 +1786,14 @@ bool _CFIsSwift(CFTypeID type, CFSwiftRef obj) {
         return false;
     }
     if (obj->isa == (uintptr_t)__CFConstantStringClassReferencePtr) return false;
-    return obj->isa != __CFRuntimeObjCClassTable[type];
+    
+    uintptr_t *collection = __CFRuntimeObjCClassTable[type];
+    
+    for (CFIndex cIndex = 0; cIndex < __CFBridgeClassCollectionSize; cIndex++) {
+        if (obj->isa == collection[cIndex]) return false;
+    }
+    
+    return true;
 }
 
 const char *_NSPrintForDebugger(void *cf) {

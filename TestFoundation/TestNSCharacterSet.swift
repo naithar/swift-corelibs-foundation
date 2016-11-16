@@ -36,6 +36,8 @@ class TestNSCharacterSet : XCTestCase {
             ("test_AnnexPlanes", test_AnnexPlanes),
             ("test_Planes", test_Planes),
             ("test_InlineBuffer", test_InlineBuffer),
+            
+            ("test_hash", test_hash)
         ]
     }
     
@@ -249,6 +251,12 @@ class TestNSCharacterSet : XCTestCase {
     
     func test_InlineBuffer() {
         
+    }
+    
+    func test_hash() {
+        _ = NSCharacterSet().hash
+        
+        _ = NSMutableCharacterSet().hash
     }
 }
 

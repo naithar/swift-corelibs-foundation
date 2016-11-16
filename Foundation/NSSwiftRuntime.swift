@@ -80,27 +80,38 @@ internal func __CFSwiftGetBaseClass() -> AnyObject.Type {
     return __NSCFType.self
 }
 
+internal func __CFInitializeBridgeTypes(typeID: CFTypeID, classes: [AnyClass]) {
+    var classes = classes.map { `class` in
+        unsafeBitCast(`class`, to: UnsafeRawPointer.self)
+    }
+    let count = classes.count
+    
+    classes.withUnsafeMutablePointerOrAllocation(count) {
+       _CFRuntimeBridgeTypeToClass(typeID, $0, Int32(count))
+    }
+}
+
 internal func __CFInitializeSwift() {
     
-    _CFRuntimeBridgeTypeToClass(CFStringGetTypeID(), unsafeBitCast(_NSCFString.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFArrayGetTypeID(), unsafeBitCast(_NSCFArray.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFDictionaryGetTypeID(), unsafeBitCast(_NSCFDictionary.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFSetGetTypeID(), unsafeBitCast(_NSCFSet.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFNumberGetTypeID(), unsafeBitCast(NSNumber.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFDataGetTypeID(), unsafeBitCast(NSData.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFDateGetTypeID(), unsafeBitCast(NSDate.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFURLGetTypeID(), unsafeBitCast(NSURL.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFCalendarGetTypeID(), unsafeBitCast(NSCalendar.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFLocaleGetTypeID(), unsafeBitCast(NSLocale.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFTimeZoneGetTypeID(), unsafeBitCast(NSTimeZone.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFCharacterSetGetTypeID(), unsafeBitCast(_NSCFCharacterSet.self, to: UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(_CFKeyedArchiverUIDGetTypeID(), unsafeBitCast(_NSKeyedArchiverUID.self, to: UnsafeRawPointer.self))
+    __CFInitializeBridgeTypes(typeID: CFStringGetTypeID(), classes: [_NSCFString.self])
+    __CFInitializeBridgeTypes(typeID: CFArrayGetTypeID(), classes: [_NSCFArray.self])
+    __CFInitializeBridgeTypes(typeID: CFDictionaryGetTypeID(), classes: [_NSCFDictionary.self])
+    __CFInitializeBridgeTypes(typeID: CFSetGetTypeID(), classes: [_NSCFSet.self])
+    __CFInitializeBridgeTypes(typeID: CFNumberGetTypeID(), classes: [NSNumber.self])
+    __CFInitializeBridgeTypes(typeID: CFDataGetTypeID(), classes: [NSData.self, NSMutableData.self])
+    __CFInitializeBridgeTypes(typeID: CFDateGetTypeID(), classes: [NSDate.self])
+    __CFInitializeBridgeTypes(typeID: CFURLGetTypeID(), classes: [NSURL.self])
+    __CFInitializeBridgeTypes(typeID: CFCalendarGetTypeID(), classes: [NSCalendar.self])
+    __CFInitializeBridgeTypes(typeID: CFLocaleGetTypeID(), classes: [NSLocale.self])
+    __CFInitializeBridgeTypes(typeID: CFTimeZoneGetTypeID(), classes: [NSTimeZone.self])
+    __CFInitializeBridgeTypes(typeID: CFCharacterSetGetTypeID(), classes: [_NSCFCharacterSet.self, NSCharacterSet.self, NSMutableCharacterSet.self])
+    __CFInitializeBridgeTypes(typeID: _CFKeyedArchiverUIDGetTypeID(), classes: [_NSKeyedArchiverUID.self])
     
-//    _CFRuntimeBridgeTypeToClass(CFErrorGetTypeID(), unsafeBitCast(NSError.self, UnsafeRawPointer.self))
-    _CFRuntimeBridgeTypeToClass(CFAttributedStringGetTypeID(), unsafeBitCast(NSMutableAttributedString.self, to: UnsafeRawPointer.self))
-//    _CFRuntimeBridgeTypeToClass(CFReadStreamGetTypeID(), unsafeBitCast(InputStream.self, UnsafeRawPointer.self))
-//    _CFRuntimeBridgeTypeToClass(CFWriteStreamGetTypeID(), unsafeBitCast(OutputStream.self, UnsafeRawPointer.self))
-   _CFRuntimeBridgeTypeToClass(CFRunLoopTimerGetTypeID(), unsafeBitCast(Timer.self, to: UnsafeRawPointer.self))
+    //__CFInitializeBridgeTypes(typeID: CFErrorGetTypeID(), classes: [NSError.self])
+    __CFInitializeBridgeTypes(typeID: CFAttributedStringGetTypeID(), classes: [NSMutableAttributedString.self])
+    //__CFInitializeBridgeTypes(typeID: CFReadStreamGetTypeID(), classes: [InputStream.self])
+    //__CFInitializeBridgeTypes(typeID: CFWriteStreamGetTypeID(), classes: [OutputStream.self])
+    __CFInitializeBridgeTypes(typeID: CFRunLoopTimerGetTypeID(), classes: [Timer.self])
     
     __CFSwiftBridge.NSObject.isEqual = _CFSwiftIsEqual
     __CFSwiftBridge.NSObject.hash = _CFSwiftGetHash

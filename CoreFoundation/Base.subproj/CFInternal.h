@@ -626,6 +626,7 @@ CF_PRIVATE void _CFIterateDirectory(CFStringRef directoryPath, Boolean appendSla
 
 #define __CFMaxRuntimeTypes	65535
 #define __CFRuntimeClassTableSize 1024
+#define __CFBridgeClassCollectionSize 3
 
 extern void _CFRuntimeSetInstanceTypeIDAndIsa(CFTypeRef cf, CFTypeID newTypeID);
 
@@ -635,10 +636,10 @@ extern void _CFRuntimeSetInstanceTypeIDAndIsa(CFTypeRef cf, CFTypeID newTypeID);
 
 #define CF_SWIFT_CALLV(obj, fn, ...) __CFSwiftBridge.fn((CFSwiftRef)obj, ##__VA_ARGS__)
 
-extern uintptr_t __CFRuntimeObjCClassTable[];
+extern uintptr_t __CFRuntimeObjCClassTable[][__CFBridgeClassCollectionSize];
 
 CF_INLINE uintptr_t __CFISAForTypeID(CFTypeID typeID) {
-    return (typeID < __CFRuntimeClassTableSize) ? __CFRuntimeObjCClassTable[typeID] : 0;
+    return (typeID < __CFRuntimeClassTableSize) ? __CFRuntimeObjCClassTable[typeID][0] : 0;
 }
 
 /* For Swift, which can't allocate any CF objects until after the bridge is initialized */

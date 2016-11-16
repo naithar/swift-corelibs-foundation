@@ -243,7 +243,7 @@ CF_EXPORT struct _CFSwiftBridge __CFSwiftBridge;
 CF_PRIVATE void *_Nullable _CFSwiftRetain(void *_Nullable t);
 CF_PRIVATE void _CFSwiftRelease(void *_Nullable t);
 
-CF_EXPORT void _CFRuntimeBridgeTypeToClass(CFTypeID type, const void *isa);
+CF_EXPORT void _CFRuntimeBridgeTypeToClass(CFTypeID cf_typeID, const void *cls_ref[], int size);
 
 typedef	unsigned char __cf_uuid[16];
 typedef	char __cf_uuid_string[37];
