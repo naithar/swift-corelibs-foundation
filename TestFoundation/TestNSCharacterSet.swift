@@ -36,6 +36,7 @@ class TestNSCharacterSet : XCTestCase {
             ("test_AnnexPlanes", test_AnnexPlanes),
             ("test_Planes", test_Planes),
             ("test_InlineBuffer", test_InlineBuffer),
+            ("testLongCharacterSet_SR_3216", testLongCharacterSet_SR_3216)
         ]
     }
     
@@ -249,6 +250,16 @@ class TestNSCharacterSet : XCTestCase {
     
     func test_InlineBuffer() {
         
+    }
+    
+    func testLongCharacterSet_SR_3216() {
+        let string = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&+"
+        //this should not crash
+        let charSet = CharacterSet(charactersIn: string)
+        
+        for char in string.unicodeScalars {
+            XCTAssertTrue(charSet.contains(char))
+        }
     }
 }
 
