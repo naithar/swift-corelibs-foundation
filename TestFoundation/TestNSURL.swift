@@ -526,7 +526,20 @@ class TestNSURLComponents : XCTestCase {
         XCTAssertTrue(copy.isEqual(urlComponent))
     }
     
+    
     func test_createURLWithComponents() {
+        
+        let nsError = NSError(domain: "domain", code: 0)
+        let swiftError: Swift.Error = nsError
+        
+        let nsFromSwift = swiftError as! NSError
+        
+        print(nsError)
+        print(swiftError)
+        print(nsFromSwift)
+        
+        
+        
         let urlComponents = NSURLComponents()
         urlComponents.scheme = "https";
         urlComponents.host = "com.test.swift";
