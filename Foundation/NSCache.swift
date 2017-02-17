@@ -70,17 +70,18 @@ open class NSCache<KeyType : AnyObject, ObjectType : AnyObject> : NSObject {
     open weak var delegate: NSCacheDelegate?
     
     open func object(forKey key: KeyType) -> ObjectType? {
-        var object: ObjectType?
-        
         let key = NSCacheKey(key)
         
         _lock.lock()
-        if let entry = _entries[key] {
-            object = entry.value
+        defer {
+            _lock.unlock()
         }
-        _lock.unlock()
         
-        return object
+        guard let entry = _entries[key] else {
+            return nil
+        }
+        
+        return entry.value as ObjectType
     }
     
     open func setObject(_ obj: ObjectType, forKey key: KeyType) {
@@ -118,17 +119,9 @@ open class NSCache<KeyType : AnyObject, ObjectType : AnyObject> : NSObject {
         let keyRef = NSCacheKey(key)
         
         _lock.lock()
+        defer { _lock.unlock() }
+        
         _totalCost += g
-        
-        var purgeAmount = 0
-        if totalCostLimit > 0 {
-            purgeAmount = (_totalCost + g) - totalCostLimit
-        }
-        
-        var purgeCount = 0
-        if countLimit > 0 {
-            purgeCount = (_entries.count + 1) - countLimit
-        }
         
         if let entry = _entries[keyRef] {
             entry.value = obj
@@ -138,14 +131,34 @@ open class NSCache<KeyType : AnyObject, ObjectType : AnyObject> : NSObject {
                 insert(entry)
             }
         } else {
-            _entries[keyRef] = NSCacheEntry(key: key, value: obj, cost: g)
+            let entry = NSCacheEntry(key: key, value: obj, cost: g)
+            _entries[keyRef] = entry
+            insert(entry) //is required for purging
         }
-        _lock.unlock()
+        
+        self.purgeIfNeeded()
+    }
+    
+    private func purgeIfNeeded() {
+        //Leave early if no purging is needed
+        guard self.totalCostLimit > 0 || self.countLimit > 0 else { return }
+        
+        var purgeAmount = 0
+        if totalCostLimit > 0 {
+            purgeAmount = (_totalCost) - totalCostLimit
+        }
+        
+        var purgeCount = 0
+        if countLimit > 0 {
+            purgeCount = (_entries.count) - countLimit
+        }
+        
+        //Leave early if no purging should be performed
+        guard purgeAmount > 0 || purgeCount > 0 else { return }
         
         var toRemove = [NSCacheEntry<KeyType, ObjectType>]()
         
         if purgeAmount > 0 {
-            _lock.lock()
             while _totalCost - totalCostLimit > 0 {
                 if let entry = _byCost {
                     _totalCost -= entry.cost
@@ -158,11 +171,9 @@ open class NSCache<KeyType : AnyObject, ObjectType : AnyObject> : NSObject {
             if countLimit > 0 {
                 purgeCount = (_entries.count - toRemove.count) - countLimit
             }
-            _lock.unlock()
         }
         
         if purgeCount > 0 {
-            _lock.lock()
             while (_entries.count - toRemove.count) - countLimit > 0 {
                 if let entry = _byCost {
                     _totalCost -= entry.cost
@@ -172,39 +183,36 @@ open class NSCache<KeyType : AnyObject, ObjectType : AnyObject> : NSObject {
                     break
                 }
             }
-            _lock.unlock()
         }
         
-        if let del = delegate {
-            for entry in toRemove {
-                del.cache(unsafeDowncast(self, to:NSCache<AnyObject, AnyObject>.self), willEvictObject: entry.value)
-            }
-        }
-        
-        _lock.lock()
         for entry in toRemove {
+            if let delegate = delegate {
+                delegate.cache(unsafeDowncast(self, to:NSCache<AnyObject, AnyObject>.self), willEvictObject: entry.value)
+            }
             _entries.removeValue(forKey: NSCacheKey(entry.key)) // the cost list is already fixed up in the purge routines
         }
-        _lock.unlock()
     }
-    
+
     open func removeObject(forKey key: KeyType) {
         let keyRef = NSCacheKey(key)
         
         _lock.lock()
-        if let entry = _entries.removeValue(forKey: keyRef) {
-            _totalCost -= entry.cost
-            remove(entry)
+        defer { _lock.unlock() }
+        
+        guard let entry = _entries.removeValue(forKey: keyRef) else {
+            return
         }
-        _lock.unlock()
+        
+        _totalCost -= entry.cost
+        remove(entry)
     }
     
     open func removeAllObjects() {
         _lock.lock()
+        defer { _lock.unlock() }
         _entries.removeAll()
         _byCost = nil
         _totalCost = 0
-        _lock.unlock()
     }    
 }
 
