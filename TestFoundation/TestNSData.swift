@@ -33,6 +33,7 @@ class TestNSData: XCTestCase {
     
     static var allTests: [(String, (TestNSData) -> () throws -> Void)] {
         return [
+            ("test_base64SR", test_base64SR),
             ("testBasicConstruction", testBasicConstruction),
             ("test_base64Data_medium", test_base64Data_medium),
             ("test_base64Data_small", test_base64Data_small),
@@ -92,6 +93,27 @@ class TestNSData: XCTestCase {
             ("test_emptyStringToData", test_emptyStringToData),
             ("test_repeatingValueInitialization", test_repeatingValueInitialization),
         ]
+    }
+    
+    func test_base64SR() {
+        let text = "SomeTextSomeTextSomeText"
+        
+        let data = text.data(using: .utf8)!
+        
+        let data64 = data.base64EncodedData(options: .lineLength64Characters)
+        let string64 = data.base64EncodedString(options: .lineLength64Characters)
+        XCTAssertEqual("U29tZVRleHRTb21lVGV4dFNvbWVUZXh0", string64)
+        
+        let string64_custom = String.init(data: data64, encoding: .utf8)
+        XCTAssertEqual("U29tZVRleHRTb21lVGV4dFNvbWVUZXh0", string64_custom)
+        let data_custom = Data.init(base64Encoded: data64, options: .ignoreUnknownCharacters)
+        let text_custom = String.init(data: data_custom!, encoding: .utf8)
+        XCTAssertEqual(text, text_custom)
+        
+        var bytes: [UInt8] = [0xb4, 0xda, 0x5b, 0x80, 0x2f, 0x19, 0x40, 0x33, 0x9c, 0x4a,
+                              0x41, 0xc0, 0x5a, 0x8a, 0x4a, 0xcd, 0x08, 0xc9, 0xd6, 0x12]
+        let data_SR = NSData(bytes: &bytes, length: bytes.count)
+        XCTAssertEqual("tNpbgC8ZQDOcSkHAWopKzQjJ1hI=", data_SR.base64EncodedString(options: .lineLength64Characters))
     }
     
     func test_writeToURLOptions() {

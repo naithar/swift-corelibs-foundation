@@ -628,7 +628,9 @@ open class NSData : NSObject, NSCopying, NSMutableCopying, NSSecureCoding {
         var decodedBytes = [UInt8](repeating: 0, count: self.length)
         getBytes(&decodedBytes, length: decodedBytes.count)
         let encodedBytes = NSData.base64EncodeBytes(decodedBytes, options: options)
+        print("Base 64 encoded for ->string: \(encodedBytes)")
         let characters = encodedBytes.map { Character(UnicodeScalar($0)) }
+        print("Base 64 characters \(characters)")
         return String(characters)
     }
 
@@ -637,6 +639,7 @@ open class NSData : NSObject, NSCopying, NSMutableCopying, NSSecureCoding {
         var decodedBytes = [UInt8](repeating: 0, count: self.length)
         getBytes(&decodedBytes, length: decodedBytes.count)
         let encodedBytes = NSData.base64EncodeBytes(decodedBytes, options: options)
+        print("Base 64 encoded for ->data: \(encodedBytes)")
         return Data(bytes: encodedBytes, count: encodedBytes.count)
     }
 
