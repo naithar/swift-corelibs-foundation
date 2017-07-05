@@ -737,7 +737,8 @@ public final class _DataStorage {
     public func bridgedReference() -> NSData {
         switch _backing {
         case .swift:
-            return _NSSwiftData(backing: self)
+            return NSData(bytes: self.bytes, length: self.length)
+        //_NSSwiftData(backing: self)
         case .immutable(let d):
             return d
         case .mutable(let d):
@@ -774,52 +775,55 @@ public final class _DataStorage {
         }
     }
 }
-
-internal class _NSSwiftData : NSData {
-    var _backing: _DataStorage!
-    
-    convenience init(backing: _DataStorage) {
-        self.init()
-        _backing = backing
-    }
-    
-    override var length: Int {
-        return _backing.length
-    }
-    
-    override var bytes: UnsafeRawPointer {
-        // NSData's byte pointer methods are not annotated for nullability correctly
-        // (but assume non-null by the wrapping macro guards). This placeholder value
-        // is to work-around this bug. Any indirection to the underlying bytes of an NSData
-        // with a length of zero would have been a programmer error anyhow so the actual
-        // return value here is not needed to be an allocated value. This is specifically
-        // needed to live like this to be source compatible with Swift3. Beyond that point
-        // this API may be subject to correction.
-        return _backing.bytes ?? UnsafeRawPointer(bitPattern: 0xBAD0)!
-    }
-    
-    override func copy(with zone: NSZone? = nil) -> Any {
-        return NSData(bytes: _backing.bytes, length: _backing.length)
-    }
-
-#if !DEPLOYMENT_RUNTIME_SWIFT
-    @objc
-    func _isCompact() -> Bool {
-        return true
-    }
-#endif
-
-#if DEPLOYMENT_RUNTIME_SWIFT
-    override func _providesConcreteBacking() -> Bool {
-        return true
-    }
-#else
-    @objc(_providesConcreteBacking)
-    func _providesConcreteBacking() -> Bool {
-        return true
-    }
-#endif
-}
+//
+//internal class _NSSwiftData : __NSCFData {
+//    var _backing: _DataStorage = _DataStorage()
+//    
+//    convenience init(backing: _DataStorage) {
+//        //self.init(some: 0)
+//        self.init()
+//        _backing = backing
+//    }
+//    
+//    override var length: Int {
+//        get {
+//            return _backing.length
+//        } set {}
+//    }
+//    
+//    override var bytes: UnsafeRawPointer {
+//        // NSData's byte pointer methods are not annotated for nullability correctly
+//        // (but assume non-null by the wrapping macro guards). This placeholder value
+//        // is to work-around this bug. Any indirection to the underlying bytes of an NSData
+//        // with a length of zero would have been a programmer error anyhow so the actual
+//        // return value here is not needed to be an allocated value. This is specifically
+//        // needed to live like this to be source compatible with Swift3. Beyond that point
+//        // this API may be subject to correction.
+//        return _backing.bytes ?? UnsafeRawPointer(bitPattern: 0xBAD0)!
+//    }
+//    
+//    override func copy(with zone: NSZone? = nil) -> Any {
+//        return NSData(bytes: _backing.bytes, length: _backing.length)
+//    }
+//
+//#if !DEPLOYMENT_RUNTIME_SWIFT
+//    @objc
+//    func _isCompact() -> Bool {
+//        return true
+//    }
+//#endif
+//
+//#if DEPLOYMENT_RUNTIME_SWIFT
+//    override func _providesConcreteBacking() -> Bool {
+//        return true
+//    }
+//#else
+//    @objc(_providesConcreteBacking)
+//    func _providesConcreteBacking() -> Bool {
+//        return true
+//    }
+//#endif
+//}
 
 public struct Data : ReferenceConvertible, Equatable, Hashable, RandomAccessCollection, MutableCollection, RangeReplaceableCollection {
     public typealias ReferenceType = NSData

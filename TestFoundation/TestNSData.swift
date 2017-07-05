@@ -33,6 +33,7 @@ class TestNSData: XCTestCase {
     
     static var allTests: [(String, (TestNSData) -> () throws -> Void)] {
         return [
+            ("test_NSDataCrash", test_NSDataCrash),
             ("testBasicConstruction", testBasicConstruction),
             ("test_base64Data_medium", test_base64Data_medium),
             ("test_base64Data_small", test_base64Data_small),
@@ -99,6 +100,13 @@ class TestNSData: XCTestCase {
         ]
     }
     
+    func test_NSDataCrash() {
+        let d = NSData()
+        _ = d.hash
+        
+        let md = NSMutableData()
+        _ = md.hash
+    }
     func test_writeToURLOptions() {
         let saveData = try! Data(contentsOf: Bundle.main.url(forResource: "Test", withExtension: "plist")!)
         let savePath = URL(fileURLWithPath: "/var/tmp/Test.plist")
